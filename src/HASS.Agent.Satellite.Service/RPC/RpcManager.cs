@@ -2,6 +2,7 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using GrpcDotNetNamedPipes;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Serilog;
 
 namespace HASS.Agent.Satellite.Service.RPC
@@ -21,7 +22,15 @@ namespace HASS.Agent.Satellite.Service.RPC
                 var systemSid = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
                 pipeSecurity.AddAccessRule(new PipeAccessRule(usersSid, PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 pipeSecurity.AddAccessRule(new PipeAccessRule(systemSid, PipeAccessRights.FullControl, AccessControlType.Allow));
-                
+
+                // allow current user full control if we're not running as a service
+                if (!WindowsServiceHelpers.IsWindowsService())
+                {
+                    Log.Information("[RPCMANAGER] Not running as a service, current user granted full control: {user}", Environment.UserName);
+                    var currentUserSid = WindowsIdentity.GetCurrent().User;
+                    pipeSecurity.AddAccessRule(new PipeAccessRule(currentUserSid!, PipeAccessRights.FullControl, AccessControlType.Allow));
+                }
+
                 // prepare server options
                 var serverOptions = new NamedPipeServerOptions
                 {

@@ -12,8 +12,6 @@ namespace HASS.Agent.Satellite.Service.Sensors
     /// </summary>
     internal static class SensorsManager
     {
-        private static readonly Dictionary<SensorType, (string description, int interval)> SensorInfo = new();
-
         private static bool _active = true;
         private static bool _pause;
 
@@ -24,9 +22,6 @@ namespace HASS.Agent.Satellite.Service.Sensors
         /// </summary>
         internal static async void Initialize()
         {
-            // load sensor descriptions
-            LoadSensorInfo();
-
             // wait while mqtt's connecting
             while (Variables.MqttManager.GetStatus() == MqttStatus.Connecting) await Task.Delay(250);
 
@@ -55,35 +50,42 @@ namespace HASS.Agent.Satellite.Service.Sensors
         /// <returns></returns>
         internal static async Task UnpublishAllSensors()
         {
-            var singleCount = 0;
-            var multiCount = 0;
-
-            // unpublish the autodisco's
-            if (SingleValueSensorsPresent())
+            try
             {
-                foreach (var sensor in Variables.SingleValueSensors)
-                {
-                    await sensor.UnPublishAutoDiscoveryConfigAsync();
-                    sensor.ClearAutoDiscoveryConfig();
-                    singleCount++;
-                }
-            }
+                var singleCount = 0;
+                var multiCount = 0;
 
-            if (MultiValueSensorsPresent())
+                // unpublish the autodisco's
+                if (SingleValueSensorsPresent())
+                {
+                    foreach (var sensor in Variables.SingleValueSensors)
+                    {
+                        await sensor.UnPublishAutoDiscoveryConfigAsync();
+                        sensor.ClearAutoDiscoveryConfig();
+                        singleCount++;
+                    }
+                }
+
+                if (MultiValueSensorsPresent())
+                {
+                    foreach (var sensor in Variables.MultiValueSensors)
+                    {
+                        await sensor.UnPublishAutoDiscoveryConfigAsync();
+                        sensor.ClearAutoDiscoveryConfig();
+                        multiCount++;
+                    }
+                }
+
+                Log.Information("[SENSORSMANAGER] Unpublished {count} single-value sensor(s)", singleCount);
+                Log.Information("[SENSORSMANAGER] Unpublished {count} multi-value sensor(s)", multiCount);
+
+                // reset last publish
+                _lastAutoDiscoPublish = DateTime.MinValue;
+            }
+            catch (Exception ex)
             {
-                foreach (var sensor in Variables.MultiValueSensors)
-                {
-                    await sensor.UnPublishAutoDiscoveryConfigAsync();
-                    sensor.ClearAutoDiscoveryConfig();
-                    multiCount++;
-                }
+                Log.Fatal(ex, "[SENSORSMANAGER] Error while unpublishing: {err}", ex.Message);
             }
-
-            Log.Information("[SENSORSMANAGER] Unpublished {count} single-value sensor(s)", singleCount);
-            Log.Information("[SENSORSMANAGER] Unpublished {count} multi-value sensor(s)", multiCount);
-
-            // reset last publish
-            _lastAutoDiscoPublish = DateTime.MinValue; 
         }
 
         /// <summary>
@@ -357,7 +359,8 @@ namespace HASS.Agent.Satellite.Service.Sensors
             {
                 if (!sensors.Any())
                 {
-                    Log.Warning("[SENSORSMANAGER] Received empty list, nothing to do ..");
+                    Log.Warning("[SENSORSMANAGER] Received empty list, clearing all sensors");
+                    _ = SettingsManager.ClearAllSensorsAsync();
                     return;
                 }
 
@@ -382,52 +385,5 @@ namespace HASS.Agent.Satellite.Service.Sensors
 
         private static bool SingleValueSensorsPresent() => Variables.SingleValueSensors.Any();
         private static bool MultiValueSensorsPresent() => Variables.MultiValueSensors.Any();
-
-        /// <summary>
-        /// Returns default information for the specified sensor type
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        internal static (string name, int interval) GetSensorDefaultInfo(SensorType type)
-        {
-            return !SensorInfo.ContainsKey(type) ? ("Unknown sensor, make sure HASS.Agent has finished booting up", 0) : SensorInfo[type];
-        }
-
-        /// <summary>
-        /// Loads info regarding the various sensor types
-        /// </summary>
-        private static void LoadSensorInfo()
-        {
-            SensorInfo.Add(SensorType.UserNotificationStateSensor, ("Provides the current user state:\r\n\r\nNotPresent, Busy, RunningDirect3dFullScreen, PresentationMode, AcceptsNotifications, QuietTime or RunningWindowsStoreApp.\r\n\r\nCan for instance be used to determine whether to send notifications or TTS messages.", 10));
-            SensorInfo.Add(SensorType.DummySensor, ("Dummy sensor for testing purposes, sends a random integer value between 0 and 100.", 5));
-            SensorInfo.Add(SensorType.CurrentClockSpeedSensor, ("Provides the current clockspeed of the first CPU.", 300));
-            SensorInfo.Add(SensorType.CpuLoadSensor, ("Provides the current load of the first CPU as a percentage.", 30));
-            SensorInfo.Add(SensorType.MemoryUsageSensor, ("Provides the amount of used memory as a percentage.", 30));
-            SensorInfo.Add(SensorType.ActiveWindowSensor, ("Provides the title of the current active window.", 15));
-            SensorInfo.Add(SensorType.NamedWindowSensor, ("Provides an ON/OFF value based on whether the window is currently open (doesn't have to be active).", 30));
-            SensorInfo.Add(SensorType.LastActiveSensor, ("Provides a datetime value containing the last moment the user provided any input.", 10));
-            SensorInfo.Add(SensorType.LastSystemStateChangeSensor, ("Provides the last system state change:\r\n\r\nHassAgentStarted, Logoff, SystemShutdown, Resume, Suspend, ConsoleConnect, ConsoleDisconnect, RemoteConnect, RemoteDisconnect, SessionLock, SessionLogoff, SessionLogon, SessionRemoteControl and SessionUnlock.", 10));
-            SensorInfo.Add(SensorType.LastBootSensor, ("Provides a datetime value containing the last moment the system (re)booted.\r\n\r\nImportant: Windows' FastBoot option can throw this value off, because that's a form of hibernation. You can disable it through Power Options -> 'Choose what the power buttons do' -> uncheck 'Turn on fast start-up'. It doesn't make much difference for modern machines with SSDs, but disabling makes sure you get a clean state after rebooting.", 10));
-            SensorInfo.Add(SensorType.WebcamActiveSensor, ("Provides a bool value based on whether the webcam is currently being used.", 10));
-            SensorInfo.Add(SensorType.MicrophoneActiveSensor, ("Provides a bool value based on whether the microphone is currently being used.", 10));
-            SensorInfo.Add(SensorType.SessionStateSensor, ("Provides the current session state:\r\n\r\nLocked, Unlocked or Unknown.\r\n\r\nUse a LastSystemStateChangeSensor to monitor session state changes.", 10));
-            SensorInfo.Add(SensorType.CurrentVolumeSensor, ("Provides the current volume level as a percentage.\r\n\r\nCurrently takes the volume of your default device.", 15));
-            SensorInfo.Add(SensorType.GpuLoadSensor, ("Provides the current load of the first GPU as a percentage.", 30));
-            SensorInfo.Add(SensorType.GpuTemperatureSensor, ("Provides the current temperature of the first GPU.", 30));
-            SensorInfo.Add(SensorType.WmiQuerySensor, ("Provides the result of the provided WMI query.", 10));
-            SensorInfo.Add(SensorType.StorageSensors, ("Provides the labels, total size (MB), available space (MB), used space (MB) and file system of all present non-removable disks.\r\n\r\nThis is a multi-value sensor.", 30));
-            SensorInfo.Add(SensorType.NetworkSensors, ("Provides card info, configuration, transfer- & package statistics and addresses (ip, mac, dhcp, dns) of all present network cards.\r\n\r\nThis is a multi-value sensor.", 30));
-            SensorInfo.Add(SensorType.PerformanceCounterSensor, ("Provides the values of a performance counter.\r\n\r\nFor example, the built-in CPU load sensor uses these values:\r\n\r\nCategory: Processor\r\nCounter: % Processor Time\r\nInstance: _Total\r\n\r\nYou can explore the counters through Windows' 'perfmon.exe' tool.", 30));
-
-            //SensorInfo.Add(SensorType.WindowsUpdatesSensors, ("Provides a sensor with the amount of pending driver updates, a sensor with the amount of pending software updates, a sensor containing all pending driver updates information (title, kb article id's, hidden, type and categories) and a sensor containing the same for pending software updates.\r\n\r\nThis is a costly request, so the recommended interval is 15 minutes (900 seconds). But it's capped at 10 minutes, if you provide a lower value, you'll get the last known list.\r\n\r\nThis is a multi-value sensor.", 900));
-            SensorInfo.Add(SensorType.WindowsUpdatesSensors, ("Provides a sensor with the amount of pending driver updates and a sensor with the amount of pending software updates.\r\n\r\nThis is a costly request, so the recommended interval is 15 minutes (900 seconds). But it's capped at 10 minutes, if you provide a lower value, you'll get the last known list.\r\n\r\nThis is a multi-value sensor.", 900));
-
-            SensorInfo.Add(SensorType.BatterySensors, ("Provides a sensor with the current charging status, estimated amount of minutes on a full charge, remaining charge in percentage, remaining charge in minutes and the powerline status.\r\n\r\nThis is a multi-value sensor.", 30));
-            SensorInfo.Add(SensorType.DisplaySensors, ("Provides a sensor with the amount of displays, name of the primary display, and per display its name, resolution and bits per pixel.\r\n\r\nThis is a multi-value sensor.", 15));
-            SensorInfo.Add(SensorType.AudioSensors, ("Provides information about the state of the primary audio adapter:\r\n\r\nPeak volume, audio playing (bool), default device name and default device state.\r\n\r\nThis is a multi-value sensor.", 20));
-            SensorInfo.Add(SensorType.ProcessActiveSensor, ("Provides the number of active instances of the process.", 10));
-            SensorInfo.Add(SensorType.ServiceStateSensor, ("Returns the state of the provided service: NotFound, Stopped, StartPending, StopPending, Running, ContinuePending, PausePending or Paused.\r\n\r\nMake sure to provide the 'Service name', not the 'Display name'.", 10));
-            SensorInfo.Add(SensorType.LoggedUsersSensor, ("Returns a json-formatted list of currently logged users.", 30));
-        }
     }
 }

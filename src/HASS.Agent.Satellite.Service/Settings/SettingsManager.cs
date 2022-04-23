@@ -389,32 +389,70 @@ namespace HASS.Agent.Satellite.Service.Settings
         {
             Log.Information("[SETTINGS] Unpublishing and clearing all entities ..");
 
-            // make sure the managers stop publishing
-            SensorsManager.Pause();
+            await ClearAllCommandsAsync();
+            await ClearAllSensorsAsync();
+
+            // done
+            Log.Information("[SETTINGS] All entities cleared");
+        }
+
+        /// <summary>
+        /// Unpublishes & clears all commands
+        /// </summary>
+        internal static async Task ClearAllCommandsAsync()
+        {
+            Log.Information("[SETTINGS] Unpublishing and clearing all commands ..");
+
+            // make sure the manager stops publishing
             CommandsManager.Pause();
 
             // give the managers some time to stop
             await Task.Delay(250);
 
             // unpublish all entities
-            await SensorsManager.UnpublishAllSensors();
             await CommandsManager.UnpublishAllCommands();
 
             // clear entities
             Variables.Commands = new List<AbstractCommand>();
+
+            // store
+            StoredCommands.Store();
+
+            // restart the manager
+            CommandsManager.Resume();
+
+            // done
+            Log.Information("[SETTINGS] All commands cleared");
+        }
+
+        /// <summary>
+        /// Unpublishes & clears all sensors
+        /// </summary>
+        internal static async Task ClearAllSensorsAsync()
+        {
+            Log.Information("[SETTINGS] Unpublishing and clearing all sensors ..");
+
+            // make sure the manager stops publishing
+            SensorsManager.Pause();
+
+            // give the manager some time to stop
+            await Task.Delay(250);
+
+            // unpublish all entities
+            await SensorsManager.UnpublishAllSensors();
+
+            // clear entities
             Variables.SingleValueSensors = new List<AbstractSingleValueSensor>();
             Variables.MultiValueSensors = new List<AbstractMultiValueSensor>();
 
             // store
-            StoredCommands.Store();
             StoredSensors.Store();
 
-            // restart the managers
+            // restart the manager
             SensorsManager.Resume();
-            CommandsManager.Resume();
 
             // done
-            Log.Information("[SETTINGS] All entities cleared");
+            Log.Information("[SETTINGS] All sensors cleared");
         }
 
         /// <summary>
@@ -463,6 +501,28 @@ namespace HASS.Agent.Satellite.Service.Settings
             catch (Exception ex)
             {
                 Log.Fatal(ex, "[SETTINGS] Error storing install path: {err}", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Gets the 'extended logging' setting from registry
+        /// </summary>
+        /// <returns></returns>
+        internal static bool GetExtendedLoggingSetting()
+        {
+            try
+            {
+                var setting = Registry.GetValue(Variables.RootHassAgentRegKey, "ExtendedLogging", "0");
+                if (setting == null) return false;
+
+                var extendedLoggingSetting = (string)setting;
+                if (string.IsNullOrEmpty(extendedLoggingSetting)) return false;
+                return extendedLoggingSetting == "1";
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "[SETTINGS] Error retrieving extended logging setting: {err}", ex.Message);
+                return false;
             }
         }
     }

@@ -10,8 +10,6 @@ namespace HASS.Agent.Satellite.Service.Commands
     /// </summary>
     internal static class CommandsManager
     {
-        private static readonly Dictionary<CommandType, string> CommandInfo = new();
-
         private static bool _subscribed;
 
         private static bool _active = true;
@@ -24,9 +22,6 @@ namespace HASS.Agent.Satellite.Service.Commands
         /// </summary>
         internal static async void Initialize()
         {
-            // load command descriptions
-            LoadCommandInfo();
-
             // wait while mqtt's connecting
             while (Variables.MqttManager.GetStatus() == MqttStatus.Connecting) await Task.Delay(250);
 
@@ -55,23 +50,30 @@ namespace HASS.Agent.Satellite.Service.Commands
         /// <returns></returns>
         internal static async Task UnpublishAllCommands()
         {
-            // unpublish the autodisco's
-            if (!CommandsPresent()) return;
-
-            var count = 0;
-            foreach (var command in Variables.Commands)
+            try
             {
-                await command.UnPublishAutoDiscoveryConfigAsync();
-                await Variables.MqttManager.UnubscribeAsync(command);
-                command.ClearAutoDiscoveryConfig();
-                count++;
+                // unpublish the autodisco's
+                if (!CommandsPresent()) return;
+
+                var count = 0;
+                foreach (var command in Variables.Commands)
+                {
+                    await command.UnPublishAutoDiscoveryConfigAsync();
+                    await Variables.MqttManager.UnubscribeAsync(command);
+                    command.ClearAutoDiscoveryConfig();
+                    count++;
+                }
+
+                Log.Information("[COMMANDSMANAGER] Unpublished {count} command(s)", count);
+
+                // reset last publish & subscribed
+                _lastAutoDiscoPublish = DateTime.MinValue;
+                _subscribed = false;
             }
-
-            Log.Information("[COMMANDSMANAGER] Unpublished {count} command(s)", count);
-
-            // reset last publish & subscribed
-            _lastAutoDiscoPublish = DateTime.MinValue;
-            _subscribed = false;
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "[COMMANDSMANAGER] Error while unpublishing: {err}", ex.Message);
+            }
         }
 
         /// <summary>
@@ -260,7 +262,8 @@ namespace HASS.Agent.Satellite.Service.Commands
             {
                 if (!commands.Any())
                 {
-                    Log.Warning("[COMMANDSMANAGER] Received empty list, nothing to do ..");
+                    Log.Warning("[COMMANDSMANAGER] Received empty list, clearing all commands");
+                    _ = SettingsManager.ClearAllCommandsAsync();
                     return;
                 }
 
@@ -283,40 +286,5 @@ namespace HASS.Agent.Satellite.Service.Commands
         }
 
         private static bool CommandsPresent() => Variables.Commands.Any();
-
-        /// <summary>
-        /// Returns default information for the specified command type
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        internal static string GetCommandDefaultInfo(CommandType type)
-        {
-            return !CommandInfo.ContainsKey(type) ? "Unknown command, make sure HASS.Agent has finished booting up." : CommandInfo[type];
-        }
-
-        /// <summary>
-        /// Loads info regarding the various command types
-        /// </summary>
-        private static void LoadCommandInfo()
-        {
-            CommandInfo.Add(CommandType.ShutdownCommand, "Shuts down the machine after one minute.\r\n\r\nTip: accidentally triggered? Run 'shutdown /a' to abort.");
-            CommandInfo.Add(CommandType.RestartCommand, "Restarts the machine after one minute.\r\n\r\nTip: accidentally triggered? Run 'shutdown /a' to abort.");
-            CommandInfo.Add(CommandType.HibernateCommand, "Sets the machine in hibernation.");
-            CommandInfo.Add(CommandType.SleepCommand, "Puts the machine to sleep.\r\n\r\nNote: due to a limitation in Windows, this only works if hibernation is disabled, otherwise it will just hibernate.\r\n\r\nYou can use something like NirCmd (http://www.nirsoft.net/utils/nircmd.html) to circumvent this.");
-            CommandInfo.Add(CommandType.LogOffCommand, "Logs off the current session.");
-            CommandInfo.Add(CommandType.LockCommand, "Locks the current session.");
-            CommandInfo.Add(CommandType.CustomCommand, "Execute a custom command.\r\n\r\nThese commands run without special elevation. To run elevated, create a Scheduled Task, and use 'schtasks /Run /TN \"TaskName\"' as the command to execute your task.\r\n\r\nOr enable 'run as low integrity' for even stricter execution.");
-            CommandInfo.Add(CommandType.PowershellCommand, "Execute a Powershell command or script.\r\n\r\nYou can either provide the location of a script (*.ps1), or a single-line command.\r\n\r\nThis will run without special elevation.");
-            CommandInfo.Add(CommandType.MediaPlayPauseCommand, "Simulates 'media playpause' key.");
-            CommandInfo.Add(CommandType.MediaNextCommand, "Simulates 'media next' key.");
-            CommandInfo.Add(CommandType.MediaPreviousCommand, "Simulates 'media previous' key.");
-            CommandInfo.Add(CommandType.MediaVolumeUpCommand, "Simulates 'volume up' key.");
-            CommandInfo.Add(CommandType.MediaVolumeDownCommand, "Simulates 'volume down' key.");
-            CommandInfo.Add(CommandType.MediaMuteCommand, "Simulates 'mute' key.");
-            CommandInfo.Add(CommandType.KeyCommand, "Simulates a single keypress.\r\n\r\nYou can pick any of these values: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes \r\n\r\nAnother option is using a tool like AutoHotKey and binding it to a CustomCommand.");
-            CommandInfo.Add(CommandType.PublishAllSensorsCommand, "Resets all sensor checks, forcing all sensors to process and send their value.\r\n\r\nUseful for example if you want to force HASS.Agent to update all your sensors after a HA reboot.");
-            CommandInfo.Add(CommandType.LaunchUrlCommand, "Launches the provided URL, by default in your default browser.\r\n\r\nTo use 'incognito', provide a specific browser in Configuration -> External Tools.");
-            CommandInfo.Add(CommandType.CustomExecutorCommand, "Executes the command through the configured custom executor (in Configuration -> External Tools).\r\n\r\nYour command is provided as an argument 'as is', so you have to supply your own quotes etc. if necessary.");
-        }
     }
 }

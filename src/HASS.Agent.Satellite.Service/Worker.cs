@@ -1,3 +1,4 @@
+using System.ServiceProcess;
 using HASS.Agent.Shared;
 using HASS.Agent.Satellite.Service.Commands;
 using HASS.Agent.Satellite.Service.Functions;
@@ -5,6 +6,7 @@ using HASS.Agent.Satellite.Service.Managers;
 using HASS.Agent.Satellite.Service.RPC;
 using HASS.Agent.Satellite.Service.Sensors;
 using HASS.Agent.Satellite.Service.Settings;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Serilog;
 
 namespace HASS.Agent.Satellite.Service
@@ -26,11 +28,13 @@ namespace HASS.Agent.Satellite.Service
             {
                 Shutdown();
             });
+            
+
 
             _log.LogDebug("[WORKER] StartAsync called");
             return base.StartAsync(cancellationToken);
         }
-
+        
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
@@ -62,6 +66,9 @@ namespace HASS.Agent.Satellite.Service
 
                 // initialize the commands manager
                 _ = Task.Run(CommandsManager.Initialize, stoppingToken);
+
+                // initialize the message loop
+                _ = Task.Run(Application.Run, stoppingToken);
                 
                 // initialize the systemstate manager
                 _ = Task.Run(SystemStateManager.Initialize, stoppingToken);

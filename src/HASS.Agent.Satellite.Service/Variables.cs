@@ -31,6 +31,7 @@ namespace HASS.Agent.Satellite.Service
         /// Constants
         /// </summary>
         internal const string RootMachineRegKey = @"HKEY_LOCAL_MACHINE\SOFTWARE\LAB02Research\HASSAgent\SatelliteService";
+        internal const string RootHassAgentRegKey = @"HKEY_CURRENT_USER\SOFTWARE\LAB02Research\HASSAgent";
 
         /// <summary>
         /// Logging
@@ -53,6 +54,7 @@ namespace HASS.Agent.Satellite.Service
         /// </summary>
         internal static bool ShuttingDown { get; set; } = false;
         internal static bool CommenceShutdown { get; set; } = false;
+        internal static bool ExtendedLogging { get; set; } = false;
 
         /// <summary>
         /// MQTT

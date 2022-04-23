@@ -65,7 +65,10 @@ namespace HASS.Agent.Satellite.Service.Functions
                 // stop entity managers
                 CommandsManager.Stop();
                 SensorsManager.Stop();
-                
+
+                // tidy up
+                Application.Exit();
+
                 // done
                 Log.Information("[SYSTEM] Service shutdown complete");
 

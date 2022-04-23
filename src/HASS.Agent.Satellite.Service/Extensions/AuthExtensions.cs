@@ -13,25 +13,33 @@ namespace HASS.Agent.Satellite.Service.Extensions
         /// <returns></returns>
         public static bool CheckAuthId(this string authId, string caller, bool emptyAllowed = false)
         {
-            var storedAuthId = Variables.ServiceSettings?.AuthId ?? string.Empty;
-
-            switch (emptyAllowed)
+            try
             {
-                case false when string.IsNullOrEmpty(storedAuthId):
-                    Log.Warning("[AUTH] [{method}] Stored ID is empty, auth declined", caller);
+                var storedAuthId = Variables.ServiceSettings?.AuthId ?? string.Empty;
+
+                switch (emptyAllowed)
+                {
+                    case false when string.IsNullOrEmpty(storedAuthId):
+                        Log.Warning("[AUTH] [{method}] Stored ID is empty, auth declined", caller);
+                        return false;
+
+                    case true when string.IsNullOrEmpty(storedAuthId):
+                        return true;
+                }
+
+                if (authId != storedAuthId)
+                {
+                    Log.Warning("[RPC] [{method}] Invalid auth ID", caller);
                     return false;
+                }
 
-                case true when string.IsNullOrEmpty(storedAuthId):
-                    return true;
+                return true;
             }
-
-            if (authId != storedAuthId)
+            catch (Exception ex)
             {
-                Log.Warning("[RPC] [{method}] Invalid auth ID", caller);
+                Log.Fatal(ex, "[AUTH] Error while processing auth ID: {err}", ex.Message);
                 return false;
             }
-
-            return true;
         }
     }
 }
