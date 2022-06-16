@@ -1,6 +1,6 @@
-﻿using HASS.Agent.Shared.Models.HomeAssistant.Commands;
-using HASS.Agent.Satellite.Service.Sensors;
+﻿using HASS.Agent.Satellite.Service.Sensors;
 using HASS.Agent.Shared.Enums;
+using HASS.Agent.Shared.HomeAssistant.Commands;
 
 namespace HASS.Agent.Satellite.Service.Models.HomeAssistant.Commands.InternalCommands
 {

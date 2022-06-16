@@ -1,10 +1,7 @@
-using System.ServiceProcess;
-using HASS.Agent.Satellite.Service.Functions;
 using HASS.Agent.Satellite.Service.Managers;
 using HASS.Agent.Satellite.Service.Settings;
 using Microsoft.Extensions.Hosting.WindowsServices;
 using Serilog;
-using Serilog.Events;
 
 namespace HASS.Agent.Satellite.Service
 {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HASS.Agent.Shared.Enums;
+﻿using HASS.Agent.Shared.Enums;
 using HASS.Agent.Shared.Models.Config;
 
 namespace HASS.Agent.Satellite.Service.Extensions

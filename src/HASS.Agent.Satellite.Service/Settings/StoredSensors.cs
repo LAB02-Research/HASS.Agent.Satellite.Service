@@ -1,12 +1,12 @@
 ﻿using HASS.Agent.Shared.Enums;
-using HASS.Agent.Shared.Extensions;
 using HASS.Agent.Shared.Models.Config;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors.GeneralSensors.MultiValue;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors.GeneralSensors.SingleValue;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors.PerfCounterSensors.SingleValue;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors.WmiSensors.SingleValue;
 using HASS.Agent.Satellite.Service.Extensions;
+using HASS.Agent.Shared.HomeAssistant.Sensors;
+using HASS.Agent.Shared.HomeAssistant.Sensors.GeneralSensors.MultiValue;
+using HASS.Agent.Shared.HomeAssistant.Sensors.GeneralSensors.SingleValue;
+using HASS.Agent.Shared.HomeAssistant.Sensors.PerfCounterSensors.SingleValue;
+using HASS.Agent.Shared.HomeAssistant.Sensors.WmiSensors.SingleValue;
+using HASS.Agent.Shared.Models.HomeAssistant;
 using Newtonsoft.Json;
 using Serilog;
 
