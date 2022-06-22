@@ -2,8 +2,6 @@
 using GrpcDotNetNamedPipes;
 using HASS.Agent.Shared.Models.Config.Service;
 using HASS.Agent.Shared.Models.HomeAssistant;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors;
 using HASS.Agent.Shared.Mqtt;
 using HASS.Agent.Satellite.Service.MQTT;
 using MQTTnet;

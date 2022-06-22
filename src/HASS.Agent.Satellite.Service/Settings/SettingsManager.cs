@@ -2,11 +2,10 @@
 using System.Diagnostics.CodeAnalysis;
 using HASS.Agent.Shared;
 using HASS.Agent.Shared.Models.Config.Service;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands;
-using HASS.Agent.Shared.Models.HomeAssistant.Sensors;
 using HASS.Agent.Satellite.Service.Commands;
 using HASS.Agent.Satellite.Service.Extensions;
 using HASS.Agent.Satellite.Service.Sensors;
+using HASS.Agent.Shared.Models.HomeAssistant;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Serilog;

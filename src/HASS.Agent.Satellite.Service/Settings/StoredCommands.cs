@@ -1,10 +1,11 @@
 ﻿using HASS.Agent.Shared.Enums;
 using HASS.Agent.Shared.Models.Config;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands.CustomCommands;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands.InternalCommands;
-using HASS.Agent.Shared.Models.HomeAssistant.Commands.KeyCommands;
+using HASS.Agent.Shared.HomeAssistant.Commands;
+using HASS.Agent.Shared.HomeAssistant.Commands.CustomCommands;
+using HASS.Agent.Shared.HomeAssistant.Commands.InternalCommands;
+using HASS.Agent.Shared.HomeAssistant.Commands.KeyCommands;
 using HASS.Agent.Satellite.Service.Models.HomeAssistant.Commands.InternalCommands;
+using HASS.Agent.Shared.Models.HomeAssistant;
 using Newtonsoft.Json;
 using Serilog;
 
