@@ -8,7 +8,7 @@
     <UserSecretsId>dotnet-HASSAgentSatelliteService-6E4FA50A-3AC9-4E66-8671-9FAB92372154</UserSecretsId>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2022.18.0</Version>
+    <Version>2022.20.0</Version>
     <Company>LAB02 Research</Company>
     <Product>HASS.Agent Satellite Service</Product>
     <AssemblyName>HASS.Agent.Satellite.Service</AssemblyName>
@@ -34,7 +34,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="HASS.Agent.Shared" Version="2022.22.0" />
+    <PackageReference Include="HASS.Agent.Shared" Version="2022.24.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.1" />
     <PackageReference Include="MQTTnet" Version="3.1.2" />
@@ -47,6 +47,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.1" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
